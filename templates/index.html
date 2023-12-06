@@ -1,0 +1,67 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webcam Capture</title>
+  <style>
+    #video-container {
+      position: relative;
+      width: 640px; /* Set the desired width */
+      height: 480px; /* Set the desired height */
+      overflow: hidden;
+    }
+
+    
+    #webcam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%; /* Make the video element fill the container */
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="video-container">
+    <video id="webcam" autoplay></video>
+  </div>
+  <script>
+    const video = document.getElementById('webcam');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        setInterval(() => {
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const frame = canvas.toDataURL('image/jpeg', 0.8);
+
+          // Send the frame to the backend using the Fetch API
+          fetch('/process-frame', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ frame }),
+          })
+          .then(response => response.json())
+          .then(data => {
+            // Processed frame received from the backend
+            const processedFrame = data.processed_frame;
+
+            // Display the processed frame (optional)
+            const processedImage = new Image();
+            processedImage.src = `data:image/jpeg;base64,${processedFrame}`;
+            document.body.appendChild(processedImage);
+          });
+        }, 1000 / 30); // 30 frames per second
+      })
+      .catch(error => console.error('Error accessing webcam:', error));
+  </script>
+</body>
+</html>
