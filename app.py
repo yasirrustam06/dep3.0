@@ -5,6 +5,7 @@ import numpy as np
 import base64
 from io import BytesIO
 from PIL import Image
+import gunicorn
 import os
 
 port = int(os.environ.get('PORT', 5000))
